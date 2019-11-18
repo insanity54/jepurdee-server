@@ -1,5 +1,7 @@
 # jepurdee-server
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/insanity54/jepurdee-server.svg)](https://greenkeeper.io/)
+
 
 ## How this works
 
