@@ -5,6 +5,11 @@ const main = () => {
   var io = require('socket.io')(server);
   var buzzer = new Buzzer();
 
+  buzzer.winnerEmitter.on('buzzWinner', function (winner) {
+    console.log(`the winner is ${winner}`)
+    io.emit('buzzWinner', winner);
+  })
+
   io.on('connection', (socket) => {
     console.log(`Websockets connection established: ${socket.client.id}`)
 
@@ -32,6 +37,7 @@ const main = () => {
     });
 
     socket.on('buzz', (evt) => {
+      socket.broadcast.emit('buzz', evt);
       buzzer.logBuzz(evt);
     });
 
@@ -56,10 +62,11 @@ const main = () => {
     /**
      * Host Events
      */
-    socket.on('routeJumbotron', (evt) => {
+    socket.on('routeToScreen', (data) => {
       // example emission:
-      // this.$socket.emit('routeJumbotron', { to: '/players' });
-      socket.broadcast.emit('routeJumbotron', evt);
+      // this.$socket.emit('routeToScreen', { screenName: 'players' });
+      console.log(`route to screen ${data.screenName}`);
+      socket.broadcast.emit('routeToScreen', data);
     });
   });
 
