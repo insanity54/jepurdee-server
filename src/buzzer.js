@@ -8,8 +8,20 @@
 const EventEmitter = require('events');
 
 class Buzzer {
+  /**
+   * lagCompensationDelay is how long Buzzer will wait before choosing a winner.
+   *                      this allows slow phones and slow networks to participate
+   *                      more fairly.
+   * preUnlockDuration is the duration of time before the buzzer unlock which
+   *                   will count as a penalty if a player buzzes during
+   *
+   * penaltyDuration is the penalty amount of time a player cannot buzz
+   *
+   */
   constructor () {
-    this.lagCompensationDelay = 2750;
+    this.lagCompensationDelay = 1500;
+    this.preUnlockDuration = 500;
+    this.penaltyDuration = 500;
     this.isLocked = false;
     this.buzzLog = [];
     this.secret = Math.floor(Math.random() * 1000000);
@@ -19,15 +31,19 @@ class Buzzer {
   }
 
   logBuzz(evt) {
-    if (this.isLocked) return;
     /**
      * example of how the client sends a buzz
-     * this.$socket.emit('buzz', { id: this.pid, time: Date.now() });
+     * this.$socket.emit('buzz', { id: this.playerId, buzzEpoch: Date.now() });
      */
-    this.buzzLog.push(evt);
-    // if previous event was an unlock,
-    // and this event is a buzz,
-    // this event contains the buzz winner.
+    let timeStampedBuzzEvent = {
+      id: evt.id,
+      buzzEpoch: evt.buzzEpoch,
+      unlockEpoch: evt.unlockEpoch,
+      reactionTime: (evt.buzzEpoch - evt.unlockEpoch),
+      receivedEpoch: Date.now(),
+    }
+    this.buzzLog.push(timeStampedBuzzEvent);
+
     let previousEvent = this.buzzLog[this.buzzLog.length-2];
     let thisEvent = evt;
 
@@ -80,21 +96,75 @@ class Buzzer {
     // winner is the buzz with the lowest delta between unlockEpoch and player buzz time
     // get list of potential winners
     // look at buzz timestamps.
-    const isValidBuzzEvent = (evt) => {
+    const isRelevantBuzzEvent = (evt) => {
       if (typeof evt.buzzEpoch === 'undefined') return false;
-      if (evt.buzzEpoch < this.unlockEpoch) return false;
+      let earliestConsideredEpoch = (this.unlockEpoch - this.preUnlockDuration);
+      if (evt.buzzEpoch < earliestConsideredEpoch) return false;
       return true;
     }
+    // const returnLowestDelta = (acc, potentialWinner) => {
+    //   let delta = (potentialWinner.buzzEpoch - this.unlockEpoch);
+    //   if (delta < (acc.buzzEpoch - this.unlockEpoch)) return potentialWinner
+    //   return acc;
+    // }
+    const returnLowestReactionTime = (acc, potentialWinner) => {
+      if (potentialWinner.reactionTime < acc.reactionTime) return potentialWinner
+      return acc;
+    }
+    // /**
+    //  * flagEarlyBuzzers
+    //  * adds `flagged` property to buzzes that occur during the preUnlock phase
+    //  */
+    // const flagEarlyBuzzers = (evt) => {
+    //   if (evt.buzzEpoch < this.unlockEpoch) {
+    //     return {
+    //       buzzEpoch: evt.buzzEpoch,
+    //       id: evt.id,
+    //       flagged: true
+    //     }
+    //   } else {
+    //     return evt;
+    //   }
+    // }
+    // /**
+    //  * isValidBuzz
+    //  * returns true if the buzz does not exist during a penalty phase
+    //  */
+    // const isValidBuzz = (evt, idx, buzzList) => {
+    //   // if this buzz is itself flagged, this buzz is not valid
+    //   if (typeof evt.flagged !== 'undefined') return false;
+    //
+    //   // find the most recent flagged buzz from this player.
+    //   let previousEvents = buzzList.slice(0, idx);
+    //   let mostRecentFlaggedBuzzEvent = previousEvents.reverse().find((b) =>
+    //     typeof b.flagged === true &&
+    //     b.id === evt.id
+    //   );
+    //
+    //   if (typeof mostRecentFlaggedBuzzEvent !== 'undefined') {
+    //     // if that flagged buzz occured less than (this.penaltyDuration) ago,
+    //     // this buzz event is not valid.
+    //     if (
+    //       (mostRecentFlaggedBuzzEvent.buzzEpoch + this.penaltyDuration) >
+    //       evt.buzzEpoch
+    //     ) return false;
+    //   }
+    //
+    //   // if the most recent flagged buzz occured more than this.penaltyDuration ago, or
+    //   // if there are no flagged buzzes belonging to this player, this buzz is valid.
+    //   return true;
+    // }
 
 
-    let potentialWinnersList = this.buzzLog.filter(isValidBuzzEvent);
-    console.log('potential Winners:');
-    console.log(potentialWinnersList);
 
-    // @TODO make it choose the player with the fastest reflex
-    //       delta = (potentialWinner.buzzEpoch - this.unlockEpoch)
-    //       thoose the player with the lowest delta
-    // return this.winnerEmitter.emit('buzzWinner', thisEvent);
+
+    // make it choose the player with the fastest reflex
+    // delta = (potentialWinner.buzzEpoch - this.unlockEpoch)
+    // thoose the player with the lowest delta
+    let potentialWinners = this.buzzLog.filter(isRelevantBuzzEvent);
+    console.log(potentialWinners)
+    let winner = potentialWinners.reduce(returnLowestReactionTime);
+    return this.winnerEmitter.emit('buzzWinner', winner);
   }
 }
 
