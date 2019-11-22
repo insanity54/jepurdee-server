@@ -1,0 +1,3 @@
+[submodule "jepurdee"]
+	path = jepurdee
+	url = https://github.com/insanity54/jepurdee
