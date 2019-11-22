@@ -1,8 +1,10 @@
 var Buzzer = require('./buzzer');
+var SocketIO = require('socket.io');
+var http = require('http');
 
-const main = () => {
-  var server = require('http').createServer();
-  var io = require('socket.io')(server);
+const main = (app) => {
+  var server = http.createServer(app);
+  var io = SocketIO(server);
   var buzzer = new Buzzer();
 
   buzzer.winnerEmitter.on('buzzWinner', function (winner) {
@@ -58,6 +60,10 @@ const main = () => {
       socket.broadcast.emit('lockBuzzer', evt);
     });
 
+    // socket.on('shareGame', (evt) => {
+    //   socket.broadcast.emit('shareGame', evt);
+    // });
+
 
     /**
      * Host Events
@@ -70,9 +76,6 @@ const main = () => {
     });
   });
 
-  server.listen(process.env.PORT, () => {
-      console.log(`listening on port ${process.env.PORT}`);
-  })
 
   return io;
 };
