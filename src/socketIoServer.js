@@ -8,9 +8,9 @@ const main = (app) => {
   var buzzer = new Buzzer();
 
   buzzer.winnerEmitter.on('buzzWinner', function (winner) {
-    console.log(`the winner is ${winner}`)
+    console.log(`the winner is ${winner}`);
     io.emit('buzzWinner', winner);
-  })
+  });
 
   io.on('connection', (socket) => {
     console.log(`Websockets connection established: ${socket.client.id}`)
@@ -77,7 +77,7 @@ const main = (app) => {
   });
 
 
-  return io;
+  return server;
 };
 
 

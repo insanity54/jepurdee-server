@@ -6,7 +6,9 @@
   "scripts": {
     "test": "mocha",
     "serve": "node index",
-    "dev": "supervisor index"
+    "start": "node index",
+    "dev": "supervisor index",
+    "preinstall": "git submodule update --remote --init"
   },
   "repository": {
     "type": "git",
