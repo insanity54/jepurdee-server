@@ -14,8 +14,8 @@
     "type": "git",
     "url": "git+https://github.com/insanity54/jepurdee-server.git"
   },
-  "engines": { 
-    "node": ">=v10.15.3"
+  "engines": {
+    "node": "~v10.15.3"
   },
   "keywords": [
     "jepurdee"
