@@ -7,8 +7,7 @@
     "test": "mocha",
     "serve": "node index",
     "start": "node index",
-    "dev": "supervisor index",
-    "preinstall": "git submodule update --remote --init"
+    "dev": "supervisor index"
   },
   "repository": {
     "type": "git",
