@@ -1,10 +1,11 @@
 const path = require('path');
+const jepurdeeDistFolder = path.resolve('../node_modules/jepurdee/dist/');
 
 const main = (app, express) => {
-  app.use(express.static('node_modules/jepurdee/dist'));
+  app.use(express.static(jepurdeeDistFolder));
 
   app.all('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'jepurdee/dist/index.html'));
+    res.sendFile(path.resolve(jepurdeeDistFolder, 'index.html'));
   });
 }
 
