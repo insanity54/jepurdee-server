@@ -1,5 +1,7 @@
+
+
 const main = (app, express) => {
-  app.use(express.static('data/games'));
+  // app.use(express.static('data/repository'));
 
   /**
    * Upload a game file to the server.
@@ -9,7 +11,8 @@ const main = (app, express) => {
     // verify file is a game file
     // store game file using gameId as unique id
     let game = req.body;
-    console.log(game);
+
+    console.log(req);
   });
 
   app.get('/api/v1/game/:gameId', (req, res) => {
