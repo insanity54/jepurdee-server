@@ -1,5 +1,5 @@
 const path = require('path');
-const jepurdeeDistFolder = path.join(__dirname, '../node_modules/jepurdee/dist/');
+const jepurdeeDistFolder = path.join(__dirname, 'jepurdee/dist/');
 
 const main = (app, express) => {
   app.use(express.static(jepurdeeDistFolder));
