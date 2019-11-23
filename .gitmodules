@@ -1,0 +1,3 @@
+[submodule "src/jepurdee"]
+	path = src/jepurdee
+	url = https://github.com/insanity54/jepurdee/
