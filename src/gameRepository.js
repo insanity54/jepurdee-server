@@ -1,6 +1,9 @@
 
+JSZip = require('jszip');
 
 const main = (app, express) => {
+  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json());
   // app.use(express.static('data/repository'));
 
   /**
@@ -10,13 +13,25 @@ const main = (app, express) => {
     // receive file
     // verify file is a game file
     // store game file using gameId as unique id
-    let game = req.body;
-
-    console.log(req);
+    let file = req.body;
+    // unzip
+    console.log(file);
+    JSZip.loadAsync(file).then((zip) => {
+      }).then((data) => {
+        console.log(data)
+        res.send('creat');
+      }).catch((e) => {
+        console.log(`holy shit we got an error`)
+        console.error(e);
+      });
   });
 
   app.get('/api/v1/game/:gameId', (req, res) => {
     // retrieve game json
+
+  });
+
+  app.post('/api/v1/game/update', (req, res) => {
 
   });
 
