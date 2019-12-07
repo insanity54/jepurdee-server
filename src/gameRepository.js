@@ -1,4 +1,3 @@
-
 const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
@@ -10,7 +9,9 @@ isGuid = (id) => {
 }
 
 const main = (app, express) => {
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.urlencoded({
+    extended: true
+  }));
   app.use(express.json());
   // app.use(express.static('data/repository'));
 
@@ -22,8 +23,11 @@ const main = (app, express) => {
     // verify file is a game file
     // store game file using gameId as unique id
     let zipContent = req.body.payload;
+
     // unzip
-    JSZip.loadAsync(zipContent, { base64: true })
+    JSZip.loadAsync(zipContent, {
+        base64: true
+      })
       .then((data) => {
         // console.log(data);
         let matches = data
@@ -54,32 +58,39 @@ const main = (app, express) => {
 
 
         idPromise.then((id) => {
-          return fsp.mkdir(path.join(repoDir, id)).then(() => {
-            return fsp.mkdir(path.join(repoDir, id, 'assets')).then(() => {
+            return fsp.mkdir(path.join(repoDir, id, 'raw', 'assets'), {
+              recursive: true
+            }).then(() => {
+              data.generateNodeStream().pipe(fs.createWriteStream(path.join(repoDir, id, `${id}.zip`)));
               gameFiles.forEach((file) => {
                 // write each file to disk
                 file
-                .nodeStream()
-                .pipe(fs.createWriteStream(path.join(repoDir, id, file.name)))
+                  .nodeStream()
+                  .pipe(fs.createWriteStream(path.join(repoDir, id, 'raw', file.name)))
               })
             });
-          });
-        })
-        .then((id) => {
-          console.log('sendin')
-          res.json({ msg: `game uploaded successfully with id ${id}` });
-        })
-        .catch((e) => {
-          if (typeof e.code !== 'undefined') {
-            if (e.code === 'EEXIST') {
-              return res
-                .status(400)
-                .json({ msg: 'A game with this id already exists.' })
+          })
+          .then((id) => {
+            console.log('sendin')
+            res.json({
+              msg: `game uploaded successfully with id ${id}`
+            });
+          })
+          .catch((e) => {
+            if (typeof e.code !== 'undefined') {
+              if (e.code === 'EEXIST') {
+                return res
+                  .status(400)
+                  .json({
+                    msg: 'A game with this id already exists.'
+                  })
+              }
             }
-          }
-          console.log('catchin')
-          return res.status(400).json({ msg: e });
-        })
+            console.log('catchin')
+            return res.status(400).json({
+              msg: e
+            });
+          })
       }).catch((e) => {
         console.log(`holy shit we got an error`);
         console.error(e);
@@ -90,11 +101,32 @@ const main = (app, express) => {
     // retrieve game json
     let gameId = req.params.gameId;
     if (typeof gameId === 'undefined')
-      return res.send(400).json({ msg: 'a gameId was not sent. gameId parameter is required!' });
+      return res.send(400).json({
+        msg: 'a gameId was not sent. gameId parameter is required!'
+      });
 
-    fsp.readFile(path.join(repoDir, gameId, `${gameId}.json`)).then((file) => {
-      console.log(file);
+    fsp.readFile(
+      path.join(repoDir, gameId, 'raw', `${gameId}.json`),
+      { encoding: 'utf-8' }
+    ).then((file) => {
+      res.json(file);
     });
+  });
+
+  app.get('/api/v1/game/:gameId/asset/:assetId', (req, res) => {
+    // retrieve game json
+    let { gameId, assetId } = req.params;
+    if (typeof gameId === 'undefined')
+      return res.send(400).json({
+        msg: 'a gameId was not sent. gameId parameter is required!'
+      });
+    if (typeof assetId === 'undefined')
+      return res.send(400).json({
+        msg: 'a assetId was not sent. assetId parameter is required!'
+      });
+
+    res.sendFile(path.join(repoDir, gameId, 'raw', 'assets', `${assetId}`));
+
   });
 
   app.post('/api/v1/game/update', (req, res) => {
@@ -102,7 +134,9 @@ const main = (app, express) => {
   });
 
   app.get('/api/v1/test', (req, res) => {
-    res.json({ msg: 'it works!' });
+    res.json({
+      msg: 'it works!'
+    });
   });
 }
 

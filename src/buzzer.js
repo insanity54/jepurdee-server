@@ -102,60 +102,11 @@ class Buzzer {
       if (evt.buzzEpoch < earliestConsideredEpoch) return false;
       return true;
     }
-    // const returnLowestDelta = (acc, potentialWinner) => {
-    //   let delta = (potentialWinner.buzzEpoch - this.unlockEpoch);
-    //   if (delta < (acc.buzzEpoch - this.unlockEpoch)) return potentialWinner
-    //   return acc;
-    // }
+
     const returnLowestReactionTime = (acc, potentialWinner) => {
       if (potentialWinner.reactionTime < acc.reactionTime) return potentialWinner
       return acc;
     }
-    // /**
-    //  * flagEarlyBuzzers
-    //  * adds `flagged` property to buzzes that occur during the preUnlock phase
-    //  */
-    // const flagEarlyBuzzers = (evt) => {
-    //   if (evt.buzzEpoch < this.unlockEpoch) {
-    //     return {
-    //       buzzEpoch: evt.buzzEpoch,
-    //       id: evt.id,
-    //       flagged: true
-    //     }
-    //   } else {
-    //     return evt;
-    //   }
-    // }
-    // /**
-    //  * isValidBuzz
-    //  * returns true if the buzz does not exist during a penalty phase
-    //  */
-    // const isValidBuzz = (evt, idx, buzzList) => {
-    //   // if this buzz is itself flagged, this buzz is not valid
-    //   if (typeof evt.flagged !== 'undefined') return false;
-    //
-    //   // find the most recent flagged buzz from this player.
-    //   let previousEvents = buzzList.slice(0, idx);
-    //   let mostRecentFlaggedBuzzEvent = previousEvents.reverse().find((b) =>
-    //     typeof b.flagged === true &&
-    //     b.id === evt.id
-    //   );
-    //
-    //   if (typeof mostRecentFlaggedBuzzEvent !== 'undefined') {
-    //     // if that flagged buzz occured less than (this.penaltyDuration) ago,
-    //     // this buzz event is not valid.
-    //     if (
-    //       (mostRecentFlaggedBuzzEvent.buzzEpoch + this.penaltyDuration) >
-    //       evt.buzzEpoch
-    //     ) return false;
-    //   }
-    //
-    //   // if the most recent flagged buzz occured more than this.penaltyDuration ago, or
-    //   // if there are no flagged buzzes belonging to this player, this buzz is valid.
-    //   return true;
-    // }
-
-
 
 
     // make it choose the player with the fastest reflex
