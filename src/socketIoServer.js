@@ -50,6 +50,10 @@ const main = (app) => {
       socket.broadcast.emit('startGame', evt);
     });
 
+    socket.on('restartGame', (evt) => {
+      socket.broadcast.emit('restartGame', evt);
+    });
+
     socket.on('unlockBuzzer', (evt) => {
       buzzer.unlockBuzzer();
       socket.broadcast.emit('unlockBuzzer', evt);
@@ -58,6 +62,14 @@ const main = (app) => {
     socket.on('lockBuzzer', (evt) => {
       buzzer.lockBuzzer();
       socket.broadcast.emit('lockBuzzer', evt);
+    });
+
+    socket.on('revealCategory', (evt) => {
+      socket.broadcast.emit('revealCategory', evt);
+    });
+
+    socket.on('revealAnswers', (evt) => {
+      socket.broadcast.emit('revealAnswers', evt);
     });
 
     // socket.on('shareGame', (evt) => {
