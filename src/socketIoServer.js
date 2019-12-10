@@ -72,6 +72,12 @@ const main = (app) => {
       socket.broadcast.emit('revealAnswers', evt);
     });
 
+    socket.on('openAnswer', (evt) => {
+      console.log('oepnAnwwswer')
+      console.log(evt);
+      socket.broadcast.emit('openAnswer', evt);
+    });
+
     // socket.on('shareGame', (evt) => {
     //   socket.broadcast.emit('shareGame', evt);
     // });
