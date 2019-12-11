@@ -73,9 +73,11 @@ const main = (app) => {
     });
 
     socket.on('openAnswer', (evt) => {
-      console.log('oepnAnwwswer')
-      console.log(evt);
       socket.broadcast.emit('openAnswer', evt);
+    });
+
+    socket.on('answerTimeout', (evt) => {
+      socket.broadcast.emit('answerTimeout', evt);
     });
 
     // socket.on('shareGame', (evt) => {
