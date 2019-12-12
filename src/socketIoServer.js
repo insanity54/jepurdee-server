@@ -76,24 +76,35 @@ const main = (app) => {
       socket.broadcast.emit('openAnswer', evt);
     });
 
-    socket.on('answerTimeout', (evt) => {
-      socket.broadcast.emit('answerTimeout', evt);
+    socket.on('doAnswerTimeout', (evt) => {
+      socket.broadcast.emit('doAnswerTimeout', evt);
     });
 
-    // socket.on('shareGame', (evt) => {
-    //   socket.broadcast.emit('shareGame', evt);
-    // });
+    socket.on('doPlayerCorrect', (evt) => {
+      socket.broadcast.emit('doPlayerCorrect', evt);
+    });
 
+    socket.on('doPlayerIncorrect', (evt) => {
+      socket.broadcast.emit('doPlayerIncorrect', evt);
+    });
 
-    /**
-     * Host Events
-     */
-    socket.on('routeToScreen', (data) => {
+    socket.on('setSelectedPlayer', (evt) => {
+      socket.broadcast.emit('setSelectedPlayer', evt);
+    });
+
+    socket.on('submitWager', (evt) => {
+      socket.broadcast.emit('submitWager', evt);
+    });
+
+    socket.on('routeToScreen', (evt) => {
       // example emission:
       // this.$socket.emit('routeToScreen', { screenName: 'players' });
-      console.log(`route to screen ${data.screenName}`);
-      socket.broadcast.emit('routeToScreen', data);
+      socket.broadcast.emit('routeToScreen', evt);
     });
+
+    socket.on('buzzPlayer', (evt) => {
+      socket.broadcast.emit('buzzPlayer', evt);
+    })
   });
 
 
