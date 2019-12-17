@@ -9,7 +9,9 @@ const main = (app) => {
 
   buzzer.winnerEmitter.on('buzzWinner', function (winner) {
     console.log(`the winner is ${winner}`);
+    buzzer.lockBuzzer();
     io.emit('buzzWinner', winner);
+    io.emit('lockBuzzer');
   });
 
   io.on('connection', (socket) => {
@@ -78,6 +80,10 @@ const main = (app) => {
 
     socket.on('doAnswerTimeout', (evt) => {
       socket.broadcast.emit('doAnswerTimeout', evt);
+    });
+
+    socket.on('doPlayerTimeout', (evt) => {
+      socket.broadcast.emit('doPlayerTimeout', evt);
     });
 
     socket.on('doPlayerCorrect', (evt) => {

@@ -40,7 +40,7 @@ class Buzzer {
       buzzEpoch: evt.buzzEpoch,
       unlockEpoch: evt.unlockEpoch,
       reactionTime: (evt.buzzEpoch - evt.unlockEpoch),
-      receivedEpoch: Date.now(),
+      receivedEpoch: Date.now()
     }
     this.buzzLog.push(timeStampedBuzzEvent);
 

@@ -3,6 +3,7 @@ const fsp = fs.promises;
 const path = require('path');
 const JSZip = require('jszip');
 const repoDir = path.join(__dirname, '..', 'data', 'repository');
+const Promise = require('bluebird');
 
 isGuid = (id) => {
   return /(\{){0,1}[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}(\}){0,1}/.test(id);
@@ -24,78 +25,184 @@ const main = (app, express) => {
     // store game file using gameId as unique id
     let zipContent = req.body.payload;
 
-    // unzip
-    JSZip.loadAsync(zipContent, {
-        base64: true
-      })
-      .then((data) => {
-        // console.log(data);
-        let matches = data
-          .filter((file, data) => {
-            // find the main json file which contains the game's id.
-            // this json file will be in the root directory,
-            // NOT under the assets/ directory.
-            return (!/assets\//.test(file))
-          });
-
-        let gameFiles = data.filter((file, data) => {
-          return (!data.dir)
-        });
 
 
-        let idPromise = new Promise((resolve, reject) => {
-          matches[0].async('text').then((t) => {
-            return JSON.parse(t).id;
-          }).then((id) => {
-            if (typeof id === 'undefined') {
-              reject('A game ID was not found in the game data!');
-            } else {
-              if (!isGuid(id)) reject('Game id was not a valid guid format')
-              resolve(id);
-            }
-          });
-        });
+    // we have a zip file, and we want to end up with...
+    // * zip saved on disk as `${gameId}.zip`
+    // * success message (can be blank)
+    // * error message (can be blank)
+
+    let payload = {
+      zipContent: zipContent,
+      zipData: null,
+      manifestStr: null,
+      manifestJson: null,
+      id: null,
+    };
 
 
-        idPromise.then((id) => {
-            return fsp.mkdir(path.join(repoDir, id, 'raw', 'assets'), {
-              recursive: true
-            }).then(() => {
-              data.generateNodeStream().pipe(fs.createWriteStream(path.join(repoDir, id, `${id}.zip`)));
-              gameFiles.forEach((file) => {
-                // write each file to disk
-                file
-                  .nodeStream()
-                  .pipe(fs.createWriteStream(path.join(repoDir, id, 'raw', file.name)))
-              })
-            });
-          })
-          .then((id) => {
-            console.log('sendin')
-            res.json({
-              msg: `game uploaded successfully with id ${id}`
-            });
-          })
-          .catch((e) => {
-            if (typeof e.code !== 'undefined') {
-              if (e.code === 'EEXIST') {
-                return res
-                  .status(400)
-                  .json({
-                    msg: 'A game with this id already exists.'
-                  })
-              }
-            }
-            console.log('catchin')
-            return res.status(400).json({
-              msg: e
-            });
-          })
-      }).catch((e) => {
-        console.log(`holy shit we got an error`);
-        console.error(e);
+
+
+    // process
+    // * unzip the zip (compressed b64 data => zip object)
+    // * validate the zip (zip object => true or false)
+    //   * manifest should exist (zip object => true or false)
+    //   * assets dir should exist (zip object => true or false)
+    // * read the zip id (zip object => {String} id)
+    //   * parse manifest and get .id
+    // * store the zip on disk (zip object => promise)
+    //
+
+    let resError = (error) => {
+      return res.status(400).json({
+        msg: `${error}`
       });
+    };
+
+    let resSuccess = (payload) => {
+      let {
+        id
+      } = payload;
+      return res.json({
+        msg: `game uploaded successfully with id ${id}`
+      });
+    };
+
+
+    let unzip = (payload) => {
+      console.log('  > unzipping');
+      let {
+        zipContent
+      } = payload;
+      return JSZip.loadAsync(zipContent, {
+          base64: true
+        })
+        .then((z) => {
+          payload.zipData = z;
+          return payload;
+        })
+    };
+
+    let storeGame = (payload) => {
+      let {
+        id,
+        zipData
+      } = payload;
+      console.log('  > storing game');
+      return new Promise((resolve, reject) => {
+        zipData
+          .generateNodeStream()
+          .pipe(fs.createWriteStream(path.join(repoDir, id, `${id}.zip`)))
+          .on('finish', () => {
+            console.log('zip written to disk');
+            resolve(payload);
+          })
+          .on('error', (e) => {
+            reject(e);
+          })
+      });
+    };
+
+    let readManifest = (payload) => {
+      console.log('  > readManifest');
+      let {
+        zipData
+      } = payload;
+      let matches = zipData
+        .filter((file, data) => {
+          // find the main json file which contains the game's id.
+          // this json file will be in the root directory,
+          // NOT under the assets/ directory.
+          return (!/assets\//.test(file));
+        });
+      let gameFiles = zipData.filter((file, data) => {
+        return (!data.dir);
+      });
+      payload.manifestStr = matches[0].async('text');
+      return payload;
+    }
+
+    let getGameId = (payload) => {
+      let {
+        manifestStr
+      } = payload;
+      console.log(`  > getGameId`);
+      return manifestStr.then((ms) => {
+        let manifest = JSON.parse(ms);
+        let id = manifest.id;
+        payload.manifest = manifest;
+        payload.id = id;
+        return payload;
+      });
+    }
+
+    let validateId = (payload) => {
+      let {
+        id
+      } = payload;
+      console.log(`  > validateId id:${id}`);
+      if (typeof id === 'undefined') {
+        throw new Error('A game ID was not found in the game data!');
+      }
+      if (!isGuid(id)) throw new Error('Game id was not a valid guid format')
+      return payload;
+    };
+
+
+    let mkGameDir = (payload) => {
+      console.log('  > mkGameDir');
+      let {
+        id
+      } = payload;
+      return fsp
+        .mkdir(path.join(repoDir, id, 'raw', 'assets'), {
+          recursive: true
+        })
+        .then((p) => {
+          return payload;
+        })
+    };
+
+    let writeRawFile = (filePath, buffer) => {
+      return fsp.writeFile(filePath, buffer, {
+        encoding: 'utf8'
+      });
+    };
+
+    let writeRawFiles = (payload) => {
+      console.log('  > writeRawFiles');
+      let {
+        id,
+        zipData
+      } = payload;
+      let fileQueue = [];
+      zipData.forEach((relPath, file) => {
+        console.log(`file ${file.name}`)
+        if (file.dir === false) {
+          fileQueue.push(
+            file.async('nodebuffer').then((buf) => {
+              console.log(`    writing file ${file.name}`);
+              return writeRawFile(path.join(repoDir, id, 'raw', file.name), buf);
+            }));
+        }
+      });
+      return new Promise.all(fileQueue).then(() => {
+        return payload;
+      });
+    };
+
+
+    unzip(payload)
+      .then(readManifest)
+      .then(getGameId)
+      .then(validateId)
+      .then(mkGameDir)
+      .then(storeGame)
+      .then(writeRawFiles)
+      .then(resSuccess)
+      .catch(resError)
   });
+
 
   app.get('/api/v1/game/:gameId', (req, res) => {
     // retrieve game json
@@ -106,8 +213,9 @@ const main = (app, express) => {
       });
 
     fsp.readFile(
-      path.join(repoDir, gameId, 'raw', `${gameId}.json`),
-      { encoding: 'utf-8' }
+      path.join(repoDir, gameId, 'raw', `${gameId}.json`), {
+        encoding: 'utf-8'
+      }
     ).then((file) => {
       res.json(file);
     });
@@ -115,7 +223,10 @@ const main = (app, express) => {
 
   app.get('/api/v1/game/:gameId/asset/:assetId', (req, res) => {
     // retrieve game json
-    let { gameId, assetId } = req.params;
+    let {
+      gameId,
+      assetId
+    } = req.params;
     if (typeof gameId === 'undefined')
       return res.send(400).json({
         msg: 'a gameId was not sent. gameId parameter is required!'
