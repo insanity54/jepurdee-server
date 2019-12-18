@@ -1,18 +1,10 @@
-var Buzzer = require('./buzzer');
 var SocketIO = require('socket.io');
 var http = require('http');
 
 const main = (app) => {
   var server = http.createServer(app);
   var io = SocketIO(server);
-  var buzzer = new Buzzer();
 
-  buzzer.winnerEmitter.on('buzzWinner', function (winner) {
-    console.log(`the winner is ${winner}`);
-    buzzer.lockBuzzer();
-    io.emit('buzzWinner', winner);
-    io.emit('lockBuzzer');
-  });
 
   io.on('connection', (socket) => {
     console.log(`Websockets connection established: ${socket.client.id}`)
@@ -40,10 +32,6 @@ const main = (app) => {
       socket.broadcast.emit('kickPlayer', evt);
     });
 
-    socket.on('buzz', (evt) => {
-      socket.broadcast.emit('buzz', evt);
-      buzzer.logBuzz(evt);
-    });
 
     /**
      * Game events
@@ -54,16 +42,6 @@ const main = (app) => {
 
     socket.on('restartGame', (evt) => {
       socket.broadcast.emit('restartGame', evt);
-    });
-
-    socket.on('unlockBuzzer', (evt) => {
-      buzzer.unlockBuzzer();
-      socket.broadcast.emit('unlockBuzzer', evt);
-    });
-
-    socket.on('lockBuzzer', (evt) => {
-      buzzer.lockBuzzer();
-      socket.broadcast.emit('lockBuzzer', evt);
     });
 
     socket.on('revealCategory', (evt) => {
@@ -110,11 +88,15 @@ const main = (app) => {
 
     socket.on('buzzPlayer', (evt) => {
       socket.broadcast.emit('buzzPlayer', evt);
-    })
+    });
+
+    socket.on('setGameStarted', (evt) => {
+      socket.broadcast.emit('setGameStarted', evt);
+    });
   });
 
 
-  return server;
+  return { server, io };
 };
 
 
