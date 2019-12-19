@@ -44,11 +44,7 @@ const main = (app, express, io) => {
       delay: delay
     });
   });
-
-
   return buzzer;
-
-
 }
 
 module.exports = main;

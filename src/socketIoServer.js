@@ -93,6 +93,12 @@ const main = (app) => {
     socket.on('setGameStarted', (evt) => {
       socket.broadcast.emit('setGameStarted', evt);
     });
+
+    socket.on('syncPlayerData', (evt) => {
+      socket.broadcast.emit('syncPlayerData', evt);
+    });
+
+
   });
 
 
