@@ -52,6 +52,10 @@ const main = (app) => {
       socket.broadcast.emit('revealAnswers', evt);
     });
 
+    socket.on('startFinalTimer', (evt) => {
+      socket.broadcast.emit('startFinalTimer', evt);
+    });
+
     socket.on('openAnswer', (evt) => {
       socket.broadcast.emit('openAnswer', evt);
     });
