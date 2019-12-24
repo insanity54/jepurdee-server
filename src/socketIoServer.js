@@ -102,7 +102,29 @@ const main = (app) => {
       socket.broadcast.emit('syncPlayerData', evt);
     });
 
+    socket.on('unlockFinal', (evt) => {
+      socket.broadcast.emit('unlockFinal', evt);
+    });
 
+    socket.on('revealPlayerFinal', (evt) => {
+      socket.broadcast.emit('revealPlayerFinal', evt);
+    });
+
+    socket.on('advanceFinalState', (evt) => {
+      socket.broadcast.emit('advanceFinalState', evt);
+    });
+
+    socket.on('setFinalState', (evt) => {
+      socket.broadcast.emit('setFinalState', evt);
+    });
+
+    socket.on('setFinalWager', (evt) => {
+      socket.broadcast.emit('setFinalWager', evt);
+    });
+
+    socket.on('setFinalQuestion', (evt) => {
+      socket.broadcast.emit('setFinalQuestion', evt);
+    });
   });
 
 
